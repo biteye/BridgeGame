@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定约桥牌叫牌教学游戏</title>
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1a56db',
+                        secondary: '#e2e8f0',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                        spades: '#000000',
+                        hearts: '#e11d48',
+                        diamonds: '#ea580c',
+                        clubs: '#047857'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'deal': 'deal 1s ease-out forwards',
+                        'flip': 'flip 0.6s ease-in-out forwards',
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+                    },
+                    keyframes: {
+                        deal: {
+                            '0%': { transform: 'translateY(-50px) scale(0.8)', opacity: '0' },
+                            '100%': { transform: 'translateY(0) scale(1)', opacity: '1' },
+                        },
+                        flip: {
+                            '0%': { transform: 'rotateY(0deg)' },
+                            '100%': { transform: 'rotateY(180deg)' },
+                        },
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .card-shadow {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .card-hover {
+                transition: all 0.2s ease-in-out;
+            }
+            .card-hover:hover {
+                transform: translateY(-5px) scale(1.05);
+                z-index: 10;
+            }
+            .bid-button {
+                transition: all 0.2s ease;
+            }
+            .bid-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            .bid-button:active {
+                transform: translateY(0);
+            }
+            .suit-spades {
+                color: #000000;
+            }
+            .suit-hearts {
+                color: #e11d48;
+            }
+            .suit-diamonds {
+                color: #ea580c;
+            }
+            .suit-clubs {
+                color: #047857;
+            }
+            .card-back {
+                background-image: url('https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1019971324586885125~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1792044462&x-signature=Y%2B3o0U9SlSHijktvFQgv8fMeW4E%3D');
+                background-size: cover;
+                background-position: center;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-blue-500 to-blue-700 min-h-screen font-sans text-white">
+    <div class="container mx-auto px-4 py-8">
+        <!-- 标题区域 -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-2">定约桥牌叫牌教学游戏</h1>
+            <p class="text-xl text-blue-200">提升你的叫牌技巧，成为桥牌高手</p>
+        </header>
+
+        <!-- 游戏模式选择 -->
+        <div class="flex justify-center mb-8">
+            <button id="openingModeBtn" class="bg-white text-primary font-bold py-3 px-8 rounded-full mr-4 text-lg shadow-lg hover:bg-blue-100 transition duration-300">
+                开叫练习
+            </button>
+            <button id="respondingModeBtn" class="bg-white text-primary font-bold py-3 px-8 rounded-full ml-4 text-lg shadow-lg hover:bg-blue-100 transition duration-300">
+                应叫练习
+            </button>
+        </div>
+
+        <!-- 游戏区域 -->
+        <div class="bg-white rounded-2xl shadow-2xl p-6 mb-8">
+            <!-- 牌局展示区 -->
+            <div class="grid grid-cols-3 gap-4 mb-8">
+                <!-- 北家 -->
+                <div class="col-start-2 text-center">
+                    <div class="text-2xl font-bold text-primary mb-2">北 (N)</div>
+                    <div id="northCards" class="flex justify-center space-x-[5px] min-h-[150px]">
+                        <!-- 北家的牌将在这里动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 西家、东家 -->
+                <div class="col-start-1 text-center">
+                    <div class="text-2xl font-bold text-primary mb-2">西 (W)</div>
+                    <div id="westCards" class="flex justify-center space-x-[-25px] min-h-[150px]">
+                        <!-- 西家的牌将在这里动态生成 -->
+                    </div>
+                </div>
+                <div class="col-start-3 text-center">
+                    <div class="text-2xl font-bold text-primary mb-2">东 (E)</div>
+                    <div id="eastCards" class="flex justify-center space-x-[-25px] min-h-[150px]">
+                        <!-- 东家的牌将在这里动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 南家 -->
+                <div class="col-start-2 text-center">
+                    <div class="text-2xl font-bold text-primary mb-2">南 (S)</div>
+                    <div id="southCards" class="flex justify-center space-x-[10px] min-h-[150px] flex-wrap">
+                        <!-- 南家的牌将在这里动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 叫牌历史 -->
+            <div class="bg-blue-100 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-bold text-primary mb-2">叫牌历史</h3>
+                <div id="auctionHistory" class="flex flex-wrap gap-2 min-h-[40px]">
+                    <!-- 叫牌历史将在这里动态生成 -->
+                </div>
+            </div>
+
+            <!-- 叫牌操作区 -->
+            <div id="biddingArea" class="bg-blue-50 rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-bold text-primary mb-2">请选择你的叫牌</h3>
+                <div class="grid grid-cols-7 gap-2 mb-4">
+                    <!-- 叫牌按钮将在这里动态生成 -->
+                </div>
+                <div class="flex justify-center">
+                    <button id="passBtn" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-lg mr-4 hover:bg-gray-600 transition duration-300">
+                        Pass
+                    </button>
+                    <button id="doubleBtn" class="bg-yellow-500 text-white font-bold py-2 px-6 rounded-lg mr-4 hover:bg-yellow-600 transition duration-300">
+                        Double
+                    </button>
+                    <button id="redoubleBtn" class="bg-red-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-600 transition duration-300">
+                        Redouble
+                    </button>
+                </div>
+            </div>
+
+            <!-- 点评区域 -->
+            <div id="feedbackArea" class="hidden bg-blue-50 rounded-lg p-6">
+                <h3 class="text-lg font-bold text-primary mb-2">叫牌点评</h3>
+                <div id="feedbackContent" class="text-gray-800">
+                    <!-- 点评内容将在这里动态生成 -->
+                </div>
+                <div class="mt-4 flex justify-center">
+                    <button id="nextHandBtn" class="bg-primary text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition duration-300">
+                        下一手牌
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 牌型分析区域 -->
+        <div class="bg-white rounded-2xl shadow-2xl p-6 mb-8">
+            <h3 class="text-xl font-bold text-primary mb-4">牌型分析</h3>
+            <div class="grid grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-lg font-semibold text-primary mb-2">南家 (S)</h4>
+                    <div id="southAnalysis" class="text-gray-800">
+                        <!-- 南家牌型分析将在这里动态生成 -->
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold text-primary mb-2">北家 (N)</h4>
+                    <div id="northAnalysis" class="text-gray-800">
+                        <!-- 北家牌型分析将在这里动态生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 教学提示区域 -->
+        <div class="bg-white rounded-2xl shadow-2xl p-6">
+            <h3 class="text-xl font-bold text-primary mb-4">教学提示</h3>
+            <div id="teachingTips" class="text-gray-800">
+                <p class="mb-2"><strong>开叫基本原则：</strong></p>
+                <ul class="list-disc pl-5 mb-4">
+                    <li>12-21点：一阶花色开叫</li>
+                    <li>15-17点：1NT开叫</li>
+                    <li>22+点：2♣强开叫</li>
+                    <li>6-10点：通常Pass或弱二开叫</li>
+                </ul>
+                <p class="mb-2"><strong>应叫基本原则：</strong></p>
+                <ul class="list-disc pl-5">
+                    <li>6+点：一盖一应叫（所叫花色4+张）</li>
+                    <li>10+点：二盖一应叫（所叫花色5+张或4+张好套）</li>
+                    <li>将牌配合：根据点力决定加叫阶数</li>
+                    <li>均型牌：对应点力范围的无将应叫</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            mode: 'opening', // 'opening' 或 'responding'
+            currentHand: null,
+            auction: [],
+            currentPlayer: 'S',
+            dealer: 'N',
+            isBiddingComplete: false
+        };
+
+        // 牌张定义
+        const suits = ['spades', 'hearts', 'diamonds', 'clubs'];
+        const suitSymbols = {
+            'spades': '♠',
+            'hearts': '♥',
+            'diamonds': '♦',
+            'clubs': '♣'
+        };
+        const suitNames = {
+            'spades': '黑桃',
+            'hearts': '红心',
+            'diamonds': '方块',
+            'clubs': '梅花'
+        };
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const rankValues = {
+            '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '10': 0,
+            'J': 1, 'Q': 2, 'K': 3, 'A': 4
+        };
+
+        // 牌张图片映射
+        const cardImages = {
+            'spades_A': 'https://p3-doubao-search-sign.byteimg.com/labis/e1b378d331b8f53c8910626dfc41861e~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1792044462&x-signature=%2Bu6ZALkZWtPwCxjji%2Fs1SyOTZ%2Fs%3D',
+            'hearts_A': 'https://p3-doubao-search-sign.byteimg.com/isp-i18n-media/img/2a43e5188468f622b9bc7fc54616daf8~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1792044462&x-signature=5U2hsyzwGrXp3i7VG6SLt3WHoDg%3D',
+            'diamonds_A': 'https://p11-doubao-search-sign.byteimg.com/labis/5ba93728d78f57d222585cd490210808~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1792044462&x-signature=8xVJ3jZn4MQTYspQL%2BUl9dNtLQA%3D',
+            'clubs_A': 'https://p26-doubao-search-sign.byteimg.com/labis/16959e0d4c04b37989a41ddfcde54629~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1792044462&x-signature=enhiw66xRjYbADMWgWGTpIhRjqw%3D',
+            'card_back': 'https://p11-doubao-search-sign.byteimg.com/tos-cn-i-be4g95zd3a/1019971324586885125~tplv-be4g95zd3a-image.jpeg?lk3s=feb11e32&x-expires=1792044462&x-signature=Y%2B3o0U9SlSHijktvFQgv8fMeW4E%3D'
+        };
+
+        // 初始化游戏
+        function initGame() {
+            createBiddingButtons();
+            setupEventListeners();
+            dealNewHand();
+        }
+
+        // 创建叫牌按钮
+        function createBiddingButtons() {
+            const biddingArea = document.querySelector('#biddingArea .grid');
+            biddingArea.innerHTML = '';
+
+            // 创建1-7阶的叫牌按钮
+            for (let level = 1; level <= 7; level++) {
+                for (const suit of suits) {
+                    const button = document.createElement('button');
+                    button.className = `bid-button bg-white text-${suit} font-bold py-2 px-3 rounded-lg shadow hover:bg-${suit === 'spades' || suit === 'clubs' ? 'gray' : suit}-100 transition duration-300`;
+                    button.textContent = `${level}${suitSymbols[suit]}`;
+                    button.dataset.bid = `${level}${suit.charAt(0).toUpperCase()}`;
+                    button.addEventListener('click', () => makeBid(button.dataset.bid));
+                    biddingArea.appendChild(button);
+                }
+                
+                // 添加NT按钮
+                const ntButton = document.createElement('button');
+                ntButton.className = 'bid-button bg-white text-primary font-bold py-2 px-3 rounded-lg shadow hover:bg-blue-100 transition duration-300';
+                ntButton.textContent = `${level}NT`;
+                ntButton.dataset.bid = `${level}NT`;
+                ntButton.addEventListener('click', () => makeBid(ntButton.dataset.bid));
+                biddingArea.appendChild(ntButton);
+            }
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 模式切换按钮
+            document.getElementById('openingModeBtn').addEventListener('click', () => {
+                gameState.mode = 'opening';
+                document.getElementById('openingModeBtn').classList.add('bg-blue-200');
+                document.getElementById('respondingModeBtn').classList.remove('bg-blue-200');
+                dealNewHand();
+            });
+
+            document.getElementById('respondingModeBtn').addEventListener('click', () => {
+                gameState.mode = 'responding';
+                document.getElementById('respondingModeBtn').classList.add('bg-blue-200');
+                document.getElementById('openingModeBtn').classList.remove('bg-blue-200');
+                dealNewHand();
+            });
+
+            // 叫牌按钮
+            document.getElementById('passBtn').addEventListener('click', () => makeBid('Pass'));
+            document.getElementById('doubleBtn').addEventListener('click', () => makeBid('Double'));
+            document.getElementById('redoubleBtn').addEventListener('click', () => makeBid('Redouble'));
+
+            // 下一手牌按钮
+            document.getElementById('nextHandBtn').addEventListener('click', dealNewHand);
+        }
+
+        // 计算高花点
+        function calculateHCP(hand) {
+            let hcp = 0;
+            hand.forEach(card => {
+                hcp += card.value;
+            });
+            return hcp;
+        }
+        
+        // 计算牌型点
+        function calculateShapePoints(hand) {
+            const distribution = {
+                'spades': 0,
+                'hearts': 0,
+                'diamonds': 0,
+                'clubs': 0
+            };
+            
+            hand.forEach(card => {
+                distribution[card.suit]++;
+            });
+            
+            let shapePoints = 0;
+            for (const suit in distribution) {
+                if (distribution[suit] === 0) shapePoints += 5;
+                else if (distribution[suit] === 1) shapePoints += 3;
+                else if (distribution[suit] === 2) shapePoints += 1;
+            }
+            
+            return shapePoints;
+        }
+        
+        // 生成一副新牌
+        function dealNewHand() {
+            // 重置游戏状态
+            gameState.auction = [];
+            gameState.isBiddingComplete = false;
+            gameState.currentPlayer = 'S';
+            
+            // 轮换发牌人
+            const players = ['N', 'E', 'S', 'W'];
+            gameState.dealer = players[(players.indexOf(gameState.dealer) + 1) % 4];
+            
+            let suitableHandFound = false;
+            let hands = {};
+            
+            // 尝试生成适合练习的牌局，特别是确保南家有足够的点力
+            while (!suitableHandFound) {
+                // 生成52张牌
+                const deck = [];
+                for (const suit of suits) {
+                    for (const rank of ranks) {
+                        deck.push({
+                            suit,
+                            rank,
+                            value: rankValues[rank],
+                            image: cardImages[`${suit}_${rank}`] || `images/${suit}_${rank}.png`
+                        });
+                    }
+                }
+                
+                // 洗牌
+                shuffleDeck(deck);
+                
+                // 分牌
+                hands = {
+                    'N': deck.slice(0, 13),
+                    'E': deck.slice(13, 26),
+                    'S': deck.slice(26, 39),
+                    'W': deck.slice(39, 52)
+                };
+                
+                // 按花色和点数排序
+                for (const player in hands) {
+                    hands[player].sort((a, b) => {
+                        // 先按花色排序
+                        if (a.suit !== b.suit) {
+                            return suits.indexOf(a.suit) - suits.indexOf(b.suit);
+                        }
+                        // 再按点数排序
+                        return ranks.indexOf(b.rank) - ranks.indexOf(a.rank);
+                    });
+                }
+                
+                // 检查南家的牌力
+                if (gameState.mode === 'opening') {
+                    const southHCP = calculateHCP(hands['S']);
+                    const southShapePoints = calculateShapePoints(hands['S']);
+                    
+                    // 开叫模式下，尽量避免pass的牌，确保南家有至少10点或特殊牌型
+                    if (southHCP >= 10 || (southHCP >= 6 && southShapePoints >= 3)) {
+                        suitableHandFound = true;
+                    }
+                } else {
+                    // 应叫模式不需要特别限制
+                    suitableHandFound = true;
+                }
+            }
+            
+            gameState.currentHand = hands;
+            
+            // 更新UI
+            displayCards();
+            updateAuctionHistory();
+            updateCardAnalysis();
+            
+            // 隐藏点评区域
+            document.getElementById('feedbackArea').classList.add('hidden');
+            document.getElementById('biddingArea').classList.remove('hidden');
+            
+            // 如果是应叫模式，自动生成其他三家的叫牌
+            if (gameState.mode === 'responding') {
+                // 随机选择开叫人
+                const nonSouthPlayers = ['N', 'E', 'W'];
+                let currentBidder = nonSouthPlayers[Math.floor(Math.random() * nonSouthPlayers.length)];
+                gameState.currentPlayer = currentBidder;
+                
+                // 延迟执行叫牌流程
+                setTimeout(() => {
+                    simulateAuction();
+                }, 1000);
+            }
+        }
+
+        // 洗牌算法
+        function shuffleDeck(deck) {
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+        }
+
+        // 显示牌张
+        function displayCards() {
+            const players = ['N', 'E', 'S', 'W'];
+            const positions = {
+                'N': 'northCards',
+                'E': 'eastCards',
+                'S': 'southCards',
+                'W': 'westCards'
+            };
+            
+            for (const player of players) {
+                const container = document.getElementById(positions[player]);
+                container.innerHTML = '';
+                
+                // 决定是否显示牌面 - 只显示南家的牌，其他家在叫牌完成后才显示
+                const showFaces = player === 'S' || gameState.isBiddingComplete;
+                
+                // 南家的牌按照花色分组显示（类似北家叫牌完成后的显示方式）
+                if (player === 'S' && showFaces) {
+                    // 按照花色分组牌张
+                    const cardsBySuit = {
+                        'spades': [],
+                        'hearts': [],
+                        'diamonds': [],
+                        'clubs': []
+                    };
+                    
+                    gameState.currentHand[player].forEach(card => {
+                        cardsBySuit[card.suit].push(card);
+                    });
+                    
+                    // 按花色顺序（黑桃、红心、方块、梅花）显示牌张
+                    const suitsOrder = ['spades', 'hearts', 'diamonds', 'clubs'];
+                    
+                    // 为每个花色创建一个容器
+                    suitsOrder.forEach(suit => {
+                        const suitContainer = document.createElement('div');
+                        suitContainer.className = 'flex items-center space-x-[5px] mb-2';
+                        
+                        // 按点数排序牌张（从大到小）
+                        const sortedCards = cardsBySuit[suit].sort((a, b) => {
+                            const rankOrder = ['A', 'K', 'Q', 'J', '10', '9', '8', '7', '6', '5', '4', '3', '2'];
+                            return rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
+                        });
+                        
+                        // 显示该花色的所有牌张
+                        sortedCards.forEach((card, index) => {
+                            const cardElement = document.createElement('div');
+                            
+                            // 显示牌面
+                            cardElement.className = `card-shadow card-hover w-[60px] h-[85px] bg-white rounded-lg flex flex-col justify-between p-1 transform transition-all duration-300 animate-deal z-10`;
+                            cardElement.style.animationDelay = `${index * 50}ms`;
+                            
+                            // 统一使用文字表示牌张，确保清晰可见
+                            cardElement.innerHTML = `
+                                <div class="text-${card.suit} text-xs font-bold">${card.rank}${suitSymbols[card.suit]}</div>
+                                <div class="text-${card.suit} text-2xl text-center font-bold">${suitSymbols[card.suit]}</div>
+                                <div class="text-${card.suit} text-xs font-bold text-right">${card.rank}${suitSymbols[card.suit]}</div>
+                            `;
+                            cardElement.classList.add('border-2', `border-${card.suit}`);
+                            
+                            // 添加点击事件
+                            cardElement.addEventListener('click', () => {
+                                // 可以在这里添加牌张放大查看的功能
+                            });
+                            
+                            suitContainer.appendChild(cardElement);
+                        });
+                        
+                        container.appendChild(suitContainer);
+                    });
+                } else {
+                    // 其他玩家的牌或南家未亮牌时，使用原来的显示方式
+                    for (let i = 0; i < 13; i++) {
+                        const card = gameState.currentHand[player][i];
+                        const cardElement = document.createElement('div');
+                        
+                        if (showFaces) {
+                            // 显示牌面
+                            cardElement.className = `card-shadow card-hover w-[80px] h-[120px] bg-white rounded-lg flex flex-col justify-between p-1 transform transition-all duration-300 animate-deal`;
+                            cardElement.style.animationDelay = `${i * 50}ms`;
+                            
+                            // 统一使用文字表示牌张，确保清晰可见
+                            cardElement.innerHTML = `
+                                <div class="text-${card.suit} text-sm font-bold">${card.rank}${suitSymbols[card.suit]}</div>
+                                <div class="text-${card.suit} text-3xl text-center font-bold">${suitSymbols[card.suit]}</div>
+                                <div class="text-${card.suit} text-sm font-bold text-right">${card.rank}${suitSymbols[card.suit]}</div>
+                            `;
+                            cardElement.classList.add('border-2', `border-${card.suit}`);
+                            
+                            // 添加点击事件
+                            cardElement.addEventListener('click', () => {
+                                // 可以在这里添加牌张放大查看的功能
+                            });
+                        } else {
+                            // 显示牌背
+                            cardElement.className = `card-shadow card-hover w-[80px] h-[120px] rounded-lg transform transition-all duration-300 animate-deal card-back`;
+                            cardElement.style.animationDelay = `${i * 50}ms`;
+                        }
+                        
+                        container.appendChild(cardElement);
+                    }
+                }
+            }
+        }
+
+        // 更新叫牌历史
+        function updateAuctionHistory() {
+            const container = document.getElementById('auctionHistory');
+            container.innerHTML = '';
+            
+            if (gameState.auction.length === 0) {
+                container.innerHTML = '<span class="text-gray-500">暂无叫牌记录</span>';
+                return;
+            }
+            
+            for (const bid of gameState.auction) {
+                const bidElement = document.createElement('div');
+                bidElement.className = 'bg-white px-3 py-1 rounded-full shadow text-sm';
+                
+                if (bid.isPass) {
+                    bidElement.textContent = `${bid.player}: Pass`;
+                    bidElement.classList.add('bg-gray-100', 'text-gray-700');
+                } else if (bid.isDouble) {
+                    bidElement.textContent = `${bid.player}: Double`;
+                    bidElement.classList.add('bg-yellow-100', 'text-yellow-700');
+                } else if (bid.isRedouble) {
+                    bidElement.textContent = `${bid.player}: Redouble`;
+                    bidElement.classList.add('bg-red-100', 'text-red-700');
+                } else {
+                    // 确保level和strain都有值
+                    if (bid.level !== null && bid.strain !== null) {
+                        let symbol = '';
+                        if (bid.strain === 'NT') {
+                            symbol = 'NT';
+                        } else {
+                            symbol = suitSymbols[bid.strain.toLowerCase()] || bid.strain;
+                        }
+                        bidElement.textContent = `${bid.player}: ${bid.level}${symbol}`;
+                        bidElement.classList.add('bg-blue-100', 'text-blue-700');
+                    } else {
+                        // 处理异常情况
+                        bidElement.textContent = `${bid.player}: ${bid.bid || '未知叫牌'}`;
+                        bidElement.classList.add('bg-gray-100', 'text-gray-700');
+                    }
+                }
+                
+                container.appendChild(bidElement);
+            }
+        }
+
+        // 更新牌型分析
+        function updateCardAnalysis() {
+            const southAnalysis = document.getElementById('southAnalysis');
+            const northAnalysis = document.getElementById('northAnalysis');
+            
+            southAnalysis.innerHTML = generateHandAnalysis(gameState.currentHand['S']);
+            // 不显示北家的牌型分析，除非叫牌已完成
+            if (gameState.isBiddingComplete) {
+                northAnalysis.innerHTML = generateHandAnalysis(gameState.currentHand['N']);
+            } else {
+                northAnalysis.innerHTML = '<p class="text-gray-500">叫牌完成后显示牌型分析</p>';
+            }
+        }
+
+        // 生成牌型分析
+        function generateHandAnalysis(hand) {
+            // 计算高花点
+            let hcp = 0;
+            hand.forEach(card => {
+                hcp += card.value;
+            });
+            
+            // 计算牌型分布
+            const distribution = {
+                'spades': 0,
+                'hearts': 0,
+                'diamonds': 0,
+                'clubs': 0
+            };
+            
+            hand.forEach(card => {
+                distribution[card.suit]++;
+            });
+            
+            // 计算牌型点
+            let shapePoints = 0;
+            for (const suit in distribution) {
+                if (distribution[suit] === 0) shapePoints += 5;
+                else if (distribution[suit] === 1) shapePoints += 3;
+                else if (distribution[suit] === 2) shapePoints += 1;
+            }
+            
+            // 确定牌型
+            const suitsByLength = Object.entries(distribution)
+                .sort((a, b) => b[1] - a[1])
+                .map(entry => entry[0]);
+            
+            let shapeDescription = '';
+            const lengths = suitsByLength.map(suit => distribution[suit]).sort((a, b) => b - a);
+            
+            if (lengths[0] === 7 && lengths[1] === 6) shapeDescription = '7-6型';
+            else if (lengths[0] === 7) shapeDescription = '7-5型';
+            else if (lengths[0] === 6 && lengths[1] === 5) shapeDescription = '6-5型';
+            else if (lengths[0] === 6) shapeDescription = '6-4型';
+            else if (lengths[0] === 5 && lengths[1] === 5) shapeDescription = '5-5型';
+            else if (lengths[0] === 5 && lengths[1] === 4) shapeDescription = '5-4型';
+            else if (lengths[0] === 5) shapeDescription = '5-3-3-2型';
+            else if (lengths[0] === 4 && lengths[1] === 4) shapeDescription = '4-4-3-2型';
+            else if (lengths[0] === 4) shapeDescription = '4-3-3-3型';
+            else shapeDescription = '平均型';
+            
+            // 生成分析HTML
+            let html = `
+                <p><strong>总点数：</strong>${hcp} (高花点) + ${shapePoints} (牌型点) = ${hcp + shapePoints}</p>
+                <p><strong>牌型：</strong>${shapeDescription}</p>
+                <p><strong>花色分布：</strong></p>
+                <ul class="list-disc pl-5">
+            `;
+            
+            for (const suit of suits) {
+                const length = distribution[suit];
+                html += `<li class="suit-${suit}">${suitNames[suit]}: ${length}张</li>`;
+            }
+            
+            html += `
+                </ul>
+                <p><strong>大牌：</strong></p>
+                <ul class="list-disc pl-5">
+            `;
+            
+            const honors = {
+                'spades': [],
+                'hearts': [],
+                'diamonds': [],
+                'clubs': []
+            };
+            
+            hand.forEach(card => {
+                if (card.value > 0) {
+                    honors[card.suit].push(card.rank);
+                }
+            });
+            
+            for (const suit of suits) {
+                if (honors[suit].length > 0) {
+                    html += `<li class="suit-${suit}">${suitNames[suit]}: ${honors[suit].join(', ')}</li>`;
+                }
+            }
+            
+            html += '</ul>';
+            
+            return html;
+        }
+
+        // 生成开叫
+        function generateOpeningBid(hand) {
+            // 计算高花点
+            let hcp = 0;
+            hand.forEach(card => {
+                hcp += card.value;
+            });
+            
+            // 计算牌型分布
+            const distribution = {
+                'spades': 0,
+                'hearts': 0,
+                'diamonds': 0,
+                'clubs': 0
+            };
+            
+            hand.forEach(card => {
+                distribution[card.suit]++;
+            });
+            
+            // 确定最长花色
+            const suitsByLength = Object.entries(distribution)
+                .sort((a, b) => b[1] - a[1])
+                .map(entry => entry[0]);
+            
+            // 根据点力和牌型生成开叫
+            if (hcp >= 22) {
+                return '2C'; // 强开叫
+            } else if (hcp >= 15 && hcp <= 17) {
+                // 检查是否为均型牌
+                const lengths = suitsByLength.map(suit => distribution[suit]).sort((a, b) => b - a);
+                if (lengths[0] <= 5 && lengths[3] >= 2) {
+                    return '1NT'; // 无将开叫
+                }
+            }
+            
+            // 一阶花色开叫
+            if (hcp >= 12) {
+                if (distribution['spades'] >= 5 || distribution['hearts'] >= 5) {
+                    // 5张高花开叫
+                    if (distribution['spades'] >= distribution['hearts']) {
+                        return '1S';
+                    } else {
+                        return '1H';
+                    }
+                } else {
+                    // 4张低花开叫，先长后短
+                    if (distribution['diamonds'] >= distribution['clubs']) {
+                        return '1D';
+                    } else {
+                        return '1C';
+                    }
+                }
+            }
+            
+            // 弱二开叫
+            if (hcp >= 6 && hcp <= 10) {
+                if (distribution['spades'] === 6) return '2S';
+                if (distribution['hearts'] === 6) return '2H';
+                if (distribution['diamonds'] === 6) return '2D';
+                if (distribution['clubs'] === 6) return '2C';
+            }
+            
+            // 默认Pass
+            return 'Pass';
+        }
+
+        // 生成应叫
+        function generateRecommendedResponse(hand, openingBid) {
+            // 计算高花点
+            let hcp = 0;
+            hand.forEach(card => {
+                hcp += card.value;
+            });
+            
+            // 解析开叫
+            const level = parseInt(openingBid.charAt(0));
+            const strain = openingBid.substring(1);
+            
+            // 根据开叫和应叫牌型生成推荐应叫
+            if (openingBid === 'Pass') {
+                return 'Pass';
+            }
+            
+            // 对1NT开叫的应叫
+            if (openingBid === '1NT') {
+                if (hcp >= 10) {
+                    return '3NT'; // 邀请进局
+                } else {
+                    return 'Pass'; // 弱牌Pass
+                }
+            }
+            
+            // 对一阶花色开叫的应叫
+            if (level === 1) {
+                // 计算将牌配合
+                const suit = strain.toLowerCase();
+                let supportLength = 0;
+                hand.forEach(card => {
+                    if (card.suit === suit) supportLength++;
+                });
+                
+                if (supportLength >= 4) {
+                    // 有将牌配合，根据点力加叫
+                    if (hcp >= 13) {
+                        return `${level + 2}${strain}`; // 跳加叫进局
+                    } else if (hcp >= 10) {
+                        return `${level + 1}${strain}`; // 加叫邀请
+                    } else {
+                        return `${level + 1}${strain}`; // 简单加叫
+                    }
+                } else {
+                    // 寻找新花色
+                    const distribution = {
+                        'spades': 0,
+                        'hearts': 0,
+                        'diamonds': 0,
+                        'clubs': 0
+                    };
+                    
+                    hand.forEach(card => {
+                        distribution[card.suit]++;
+                    });
+                    
+                    const suitsByLength = Object.entries(distribution)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(entry => entry[0]);
+                    
+                    // 寻找4张以上的未叫花色
+                    for (const suit of suitsByLength) {
+                        if (distribution[suit] >= 4 && suit.charAt(0).toUpperCase() !== strain) {
+                            const newLevel = (suit === 'spades' || suit === 'hearts') && 
+                                            (strain === 'diamonds' || strain === 'clubs') ? 1 : 2;
+                            return `${newLevel}${suit.charAt(0).toUpperCase()}`;
+                        }
+                    }
+                    
+                    // 无法应叫新花色，考虑NT
+                    if (hcp >= 8) {
+                        return `${level + 1}NT`;
+                    } else {
+                        return 'Pass';
+                    }
+                }
+            }
+            
+            // 默认Pass
+            return 'Pass';
+        }
+
+        // 评估叫牌
+        function evaluateBid(bid, hand, context) {
+            let feedback = {
+                isCorrect: false,
+                isAcceptable: false,
+                recommendedBid: '',
+                explanation: '',
+                detailedExplanation: ''
+            };
+            
+            // 计算牌力和牌型信息
+            const hcp = calculateHCP(hand);
+            const shapePoints = calculateShapePoints(hand);
+            const totalPoints = hcp + shapePoints;
+            
+            // 计算牌型分布
+            const distribution = {
+                'spades': 0,
+                'hearts': 0,
+                'diamonds': 0,
+                'clubs': 0
+            };
+            
+            hand.forEach(card => {
+                distribution[card.suit]++;
+            });
+            
+            // 确定最长花色
+            const suitsByLength = Object.entries(distribution)
+                .sort((a, b) => b[1] - a[1])
+                .map(entry => entry[0]);
+            
+            // 根据游戏模式评估叫牌
+            if (gameState.mode === 'opening') {
+                const recommendedBid = generateOpeningBid(hand);
+                feedback.recommendedBid = recommendedBid;
+                
+                // 生成详细的桥牌规则解释
+                let detailedExplanation = `根据自然叫牌法规则，你的手牌分析如下：<br><br>`;
+                detailedExplanation += `- 高花点(HCP)：${hcp}点<br>`;
+                detailedExplanation += `- 牌型点：${shapePoints}点<br>`;
+                detailedExplanation += `- 总点数：${totalPoints}点<br>`;
+                detailedExplanation += `- 牌型：${suitsByLength.map(suit => `${suitNames[suit]}${distribution[suit]}张`).join('-')}<br><br>`;
+                
+                if (bid === recommendedBid) {
+                    feedback.isCorrect = true;
+                    feedback.explanation = `很好！${recommendedBid}是这手牌的最佳开叫。`;
+                    
+                    // 添加详细解释
+                    if (recommendedBid === 'Pass') {
+                        detailedExplanation += `你的牌力不足（${hcp}点），不符合开叫要求。根据自然叫牌法，一般需要至少12点才能开叫。因此Pass是正确的选择。`;
+                    } else if (recommendedBid === '1NT') {
+                        detailedExplanation += `你的牌型平均（没有单张或缺门），点力在15-17点范围内，符合1NT开叫的标准。1NT开叫表示均型牌，15-17点，是自然叫牌法中的限制性叫牌，便于同伴判断定约。`;
+                    } else if (recommendedBid === '2C') {
+                        detailedExplanation += `你的牌力很强（${hcp}点），超过了一阶开叫的范围（12-21点）。根据自然叫牌法，22点以上的强牌应使用2♣强开叫，这是一种逼叫性叫牌，要求同伴必须应叫。`;
+                    } else {
+                        const level = recommendedBid.charAt(0);
+                        const strainSymbol = recommendedBid.substring(1).toLowerCase();
+                        // 映射花色符号到花色名称
+                        const strainMap = {
+                            's': 'spades',
+                            'h': 'hearts',
+                            'd': 'diamonds',
+                            'c': 'clubs'
+                        };
+                        const strain = strainMap[strainSymbol] || strainSymbol;
+                        
+                        detailedExplanation += `你的最长花色是${suitNames[suitsByLength[0]]}(${distribution[suitsByLength[0]]}张)，点力在${hcp}点，符合一阶花色开叫的条件（12-21点）。`;
+                        
+                        if (strain === 'spades' || strain === 'hearts') {
+                            detailedExplanation += ` 你选择开叫${level}${suitSymbols[strain]}是正确的，因为高花开叫（黑桃、红心）优先级高于低花开叫（方块、草花）。`;
+                        } else {
+                            if (distribution['spades'] < 5 && distribution['hearts'] < 5) {
+                                detailedExplanation += ` 由于你没有5张以上的高花，根据自然叫牌法，应开叫最长的低花。你的${suitNames[strain]}有${distribution[strain]}张，是你的最长花色之一，因此开叫${level}${suitSymbols[strain]}是正确的。`;
+                            } else {
+                                detailedExplanation += ` 你的高花不够长（黑桃${distribution['spades']}张，红心${distribution['hearts']}张），无法开叫高花，因此选择开叫最长的低花${level}${suitSymbols[strain]}。`;
+                            }
+                        }
+                    }
+                } else if (bid === 'Pass' && recommendedBid !== 'Pass') {
+                    feedback.isAcceptable = false;
+                    feedback.explanation = `这手牌不应该Pass。推荐开叫${recommendedBid}，因为你的牌力和牌型符合开叫条件。`;
+                    
+                    detailedExplanation += `你的牌力为${hcp}点，已经达到了自然叫牌法的开叫最低要求（12点）。你的牌型是${suitsByLength.map(suit => `${suitNames[suit]}${distribution[suit]}张`).join('-')}，适合开叫${recommendedBid}。Pass是不正确的选择，因为这会导致同伴无法了解你的牌力和牌型。`;
+                    
+                    if (recommendedBid === '1NT') {
+                        detailedExplanation += ` 你的牌型平均，点力在15-17点，是标准的1NT开叫牌。`;
+                    } else if (recommendedBid.startsWith('1')) {
+                        detailedExplanation += ` 你应该开叫你的最长花色${suitNames[recommendedBid.substring(1).toLowerCase()]}，这是自然叫牌法的基本原则。`;
+                    }
+                } else if (bid !== 'Pass' && recommendedBid === 'Pass') {
+                    feedback.isAcceptable = false;
+                    feedback.explanation = `这手牌应该Pass。你的牌力不足，不适合开叫。`;
+                    
+                    detailedExplanation += `你的牌力只有${hcp}点，低于自然叫牌法的开叫最低要求（12点）。虽然你的牌型可能有一定特点（${suitsByLength.map(suit => `${suitNames[suit]}${distribution[suit]}张`).join('-')}），但点力不足是开叫的决定性因素。过早开叫可能导致同伴高估你的牌力，选择不恰当的定约。`;
+                } else {
+                    // 检查叫牌是否在可接受范围内
+                    const level = parseInt(bid.charAt(0)) || 0;
+                    const strain = bid.substring(1);
+                    
+                    const recLevel = parseInt(recommendedBid.charAt(0)) || 0;
+                    const recStrain = recommendedBid.substring(1);
+                    
+                    // 允许轻微的叫牌差异
+                    if (Math.abs(level - recLevel) <= 1 && (strain === recStrain || 
+                        (strain === 'NT' && recStrain !== 'NT') || 
+                        (recStrain === 'NT' && strain !== 'NT'))) {
+                        feedback.isAcceptable = true;
+                        feedback.explanation = `你的叫牌${bid}是可接受的，但${recommendedBid}可能更为准确。`;
+                        
+                        detailedExplanation += `你的叫牌${bid}在自然叫牌法中是可接受的变体，但${recommendedBid}更为标准。`;
+                        
+                        if (strain !== recStrain) {
+                            if (recStrain === 'NT' && strain !== 'NT') {
+                                detailedExplanation += ` 虽然你的牌型接近均型，但${recommendedBid}（1NT）更准确地描述了你的牌力范围（15-17点）和牌型特点。`;
+                            } else if (strain === 'NT' && recStrain !== 'NT') {
+                                detailedExplanation += ` 你的牌型并不完全均型（有${suitsByLength.map(suit => distribution[suit]).filter(len => len < 3).length}个短套），因此${recommendedBid}（花色开叫）比${bid}（无将开叫）更合适。`;
+                            } else {
+                                detailedExplanation += ` 在自然叫牌法中，开叫通常选择最长的花色。你的最长花色是${suitNames[suitsByLength[0]]}(${distribution[suitsByLength[0]]}张)，次长花色是${suitNames[suitsByLength[1]]}(${distribution[suitsByLength[1]]}张)。`;
+                            }
+                        }
+                        
+                        if (level !== recLevel) {
+                            if (level > recLevel) {
+                                detailedExplanation += ` 你的叫牌阶数略高，可能会给同伴造成误解，以为你有更强的牌力。`;
+                            } else {
+                                detailedExplanation += ` 虽然叫牌阶数略低，但基本传达了你的牌力范围。`;
+                            }
+                        }
+                    } else {
+                        feedback.isAcceptable = false;
+                        feedback.explanation = `你的叫牌${bid}不太合适。推荐开叫${recommendedBid}。`;
+                        
+                        detailedExplanation += `你的叫牌${bid}不符合自然叫牌法的标准原则。`;
+                        
+                        if (recommendedBid === 'Pass') {
+                            detailedExplanation += ` 你的牌力不足（${hcp}点），不应该开叫。`;
+                        } else if (recommendedBid === '1NT') {
+                            detailedExplanation += ` 你的牌型平均，点力在15-17点，应该开叫1NT而不是${bid}。`;
+                        } else if (recommendedBid.startsWith('1')) {
+                            if (bid.startsWith('1')) {
+                                detailedExplanation += ` 在自然叫牌法中，开叫通常选择最长的花色。你的最长花色是${suitNames[suitsByLength[0]]}(${distribution[suitsByLength[0]]}张)，而不是${suitNames[strain.toLowerCase()]}。`;
+                            } else {
+                                detailedExplanation += ` 你的牌力只有${hcp}点，属于低限开叫，应该从一阶开始叫牌，而不是直接叫到${level}阶。`;
+                            }
+                        } else if (recommendedBid === '2C') {
+                            detailedExplanation += ` 你的牌力很强（${hcp}点），应该使用2♣强开叫，这是自然叫牌法中表示极强牌的标准方式。`;
+                        }
+                    }
+                }
+                
+                feedback.detailedExplanation = detailedExplanation;
+            } else {
+                // 应叫模式 - 找到最后一个实质性叫牌
+                let lastSubstantialBid = null;
+                for (let i = context.length - 1; i >= 0; i--) {
+                    if (!context[i].isPass && !context[i].isDouble && !context[i].isRedouble) {
+                        lastSubstantialBid = context[i];
+                        break;
+                    }
+                }
+                
+                if (!lastSubstantialBid) {
+                    // 如果没有实质性叫牌，按照开叫评估
+                    const recommendedBid = generateOpeningBid(hand);
+                    feedback.recommendedBid = recommendedBid;
+                    
+                    let detailedExplanation = `根据自然叫牌法规则，在没有其他玩家叫牌的情况下，你的手牌分析如下：<br><br>`;
+                    detailedExplanation += `- 高花点(HCP)：${hcp}点<br>`;
+                    detailedExplanation += `- 牌型点：${shapePoints}点<br>`;
+                    detailedExplanation += `- 总点数：${totalPoints}点<br>`;
+                    detailedExplanation += `- 牌型：${suitsByLength.map(suit => `${suitNames[suit]}${distribution[suit]}张`).join('-')}<br><br>`;
+                    
+                    if (bid === recommendedBid) {
+                        feedback.isCorrect = true;
+                        feedback.explanation = `很好！${recommendedBid}是这手牌的最佳叫牌。`;
+                        
+                        if (recommendedBid === 'Pass') {
+                            detailedExplanation += `你的牌力不足（${hcp}点），不符合开叫要求。根据自然叫牌法，一般需要至少12点才能开叫。`;
+                        } else {
+                            detailedExplanation += `你的牌力和牌型符合${recommendedBid}叫牌的标准，这是自然叫牌法中的正确选择。`;
+                        }
+                    } else {
+                        feedback.isAcceptable = false;
+                        feedback.explanation = `你的叫牌${bid}不太合适。推荐叫牌${recommendedBid}。`;
+                        
+                        detailedExplanation += `你的叫牌${bid}不符合自然叫牌法的标准原则。${recommendedBid}是更合适的选择，因为你的牌力和牌型特点。`;
+                    }
+                    
+                    feedback.detailedExplanation = detailedExplanation;
+                } else {
+                    // 有实质性叫牌，按照应叫评估
+                    const recommendedBid = generateRecommendedResponse(hand, lastSubstantialBid.bid);
+                    feedback.recommendedBid = recommendedBid;
+                    
+                    let detailedExplanation = `根据自然叫牌法规则，针对${lastSubstantialBid.player}的${lastSubstantialBid.bid}叫牌，你的应叫分析如下：<br><br>`;
+                    detailedExplanation += `- 你的高花点(HCP)：${hcp}点<br>`;
+                    detailedExplanation += `- 你的牌型：${suitsByLength.map(suit => `${suitNames[suit]}${distribution[suit]}张`).join('-')}<br><br>`;
+                    
+                    // 分析开叫方的叫牌
+                    const openerLevel = parseInt(lastSubstantialBid.bid.charAt(0));
+                    const openerStrain = lastSubstantialBid.bid.substring(1);
+                    
+                    detailedExplanation += `${lastSubstantialBid.player}的${lastSubstantialBid.bid}叫牌表示：<br>`;
+                    
+                    if (openerStrain === 'NT') {
+                        if (openerLevel === 1) {
+                            detailedExplanation += `- 1NT：均型牌，15-17点<br>`;
+                        } else if (openerLevel === 2) {
+                            detailedExplanation += `- 2NT：均型牌，20-21点<br>`;
+                        }
+                    } else if (openerStrain === 'C' && openerLevel === 2) {
+                        detailedExplanation += `- 2♣：强开叫，22点以上或强牌型牌<br>`;
+                    } else {
+                        detailedExplanation += `- ${lastSubstantialBid.bid}：${suitNames[openerStrain.toLowerCase()]}花色，${openerLevel === 1 ? '12-21点' : '强牌'}<br>`;
+                    }
+                    
+                    detailedExplanation += `<br>你的应叫选择分析：<br>`;
+                    
+                    if (bid === recommendedBid) {
+                        feedback.isCorrect = true;
+                        feedback.explanation = `很好！${recommendedBid}是对${lastSubstantialBid.player}的${lastSubstantialBid.bid}叫牌的最佳应叫。`;
+                        
+                        if (recommendedBid === 'Pass') {
+                            detailedExplanation += `你的牌力不足（${hcp}点），无法对${lastSubstantialBid.bid}做出有意义的应叫。根据自然叫牌法，应叫通常需要至少6点。因此Pass是正确的选择。`;
+                        } else if (recommendedBid.includes('NT')) {
+                            detailedExplanation += `你选择应叫${recommendedBid}是正确的，因为：<br>`;
+                            detailedExplanation += `1. 你有足够的点力（${hcp}点）<br>`;
+                            detailedExplanation += `2. 你有平均牌型<br>`;
+                            detailedExplanation += `3. 你对同伴的花色没有足够支持<br>`;
+                            detailedExplanation += `这是自然叫牌法中的标准应叫，表示你有一定点力但没有好的将牌配合。`;
+                        } else if (recommendedBid.charAt(1) === openerStrain) {
+                            // 加叫同伴花色
+                            const supportLength = distribution[openerStrain.toLowerCase()];
+                            detailedExplanation += `你选择加叫同伴的${suitNames[openerStrain.toLowerCase()]}花色是正确的，因为：<br>`;
+                            detailedExplanation += `1. 你有足够的支持（${supportLength}张${suitNames[openerStrain.toLowerCase()]}）<br>`;
+                            detailedExplanation += `2. 你有合适的点力（${hcp}点）<br>`;
+                            detailedExplanation += `3. 你选择的阶数（${recommendedBid.charAt(0)}）准确反映了你的牌力范围`;
+                        } else {
+                            // 新花色应叫
+                            const newSuit = recommendedBid.substring(1).toLowerCase();
+                            detailedExplanation += `你选择应叫新花色${suitNames[newSuit]}是正确的，因为：<br>`;
+                            detailedExplanation += `1. 你有足够的点力（${hcp}点）<br>`;
+                            detailedExplanation += `2. 你有好的${suitNames[newSuit]}长套（${distribution[newSuit]}张）<br>`;
+                            detailedExplanation += `3. 这是自然叫牌法中的逼叫性叫牌，显示你有进局兴趣`;
+                        }
+                    } else if (bid === 'Pass' && recommendedBid !== 'Pass') {
+                        feedback.isAcceptable = false;
+                        feedback.explanation = `这手牌不应该Pass。对${lastSubstantialBid.player}的${lastSubstantialBid.bid}叫牌，推荐应叫${recommendedBid}。`;
+                        
+                        detailedExplanation += `你选择Pass是不合适的，因为你的牌力（${hcp}点）足够做出应叫。根据自然叫牌法：<br>`;
+                        
+                        if (recommendedBid.includes('NT')) {
+                            detailedExplanation += `- 你应该应叫${recommendedBid}，表示你有平均牌型和足够点力<br>`;
+                        } else if (recommendedBid.charAt(1) === openerStrain) {
+                            detailedExplanation += `- 你应该加叫同伴的花色到${recommendedBid.charAt(0)}阶，因为你有${distribution[openerStrain.toLowerCase()]}张支持<br>`;
+                        } else {
+                            detailedExplanation += `- 你应该应叫自己的长套花色${suitNames[recommendedBid.substring(1).toLowerCase()]}，这是逼叫性叫牌<br>`;
+                        }
+                        
+                        detailedExplanation += `Pass会导致错失可能的成局或满贯定约。`;
+                    } else if (bid !== 'Pass' && recommendedBid === 'Pass') {
+                        feedback.isAcceptable = false;
+                        feedback.explanation = `这手牌应该Pass。你的牌力不足以对${lastSubstantialBid.player}的${lastSubstantialBid.bid}叫牌做出应叫。`;
+                        
+                        detailedExplanation += `你选择应叫${bid}是不合适的，因为你的牌力不足（仅${hcp}点）。根据自然叫牌法：<br>`;
+                        detailedExplanation += `- 对一阶花色开叫的应叫通常需要至少6点<br>`;
+                        detailedExplanation += `- 对1NT开叫的应叫通常需要至少8点（ Stayman约定叫除外）<br>`;
+                        detailedExplanation += `- 你的牌型也没有特殊之处可以弥补点力不足<br>`;
+                        detailedExplanation += `低牌力的不当应叫可能导致同伴高估你的牌力，选择过高的定约。`;
+                    } else {
+                        // 检查叫牌是否在可接受范围内
+                        const level = parseInt(bid.charAt(0)) || 0;
+                        const strain = bid.substring(1);
+                        
+                        const recLevel = parseInt(recommendedBid.charAt(0)) || 0;
+                        const recStrain = recommendedBid.substring(1);
+                        
+                        // 允许轻微的叫牌差异
+                        if (Math.abs(level - recLevel) <= 1) {
+                            feedback.isAcceptable = true;
+                            feedback.explanation = `你的应叫${bid}是可接受的，但${recommendedBid}可能更为准确。`;
+                            
+                            detailedExplanation += `你的应叫${bid}在自然叫牌法中是可接受的变体，但${recommendedBid}更为标准。`;
+                            
+                            if (strain !== recStrain) {
+                                if (recStrain === openerStrain) {
+                                    detailedExplanation += ` 你有${distribution[openerStrain.toLowerCase()]}张${suitNames[openerStrain.toLowerCase()]}，应该优先支持同伴的花色。`;
+                                } else if (strain === openerStrain) {
+                                    detailedExplanation += ` 虽然你支持同伴的花色，但你的支持长度（${distribution[openerStrain.toLowerCase()]}张）或点力可能不足以加叫到这个阶数。`;
+                                } else {
+                                    detailedExplanation += ` 在自然叫牌法中，应叫通常优先考虑支持同伴花色或叫出自己的强长套。`;
+                                }
+                            }
+                            
+                            if (level !== recLevel) {
+                                if (level > recLevel) {
+                                    detailedExplanation += ` 你的叫牌阶数略高，可能表示了比实际更强的牌力或支持。`;
+                                } else {
+                                    detailedExplanation += ` 你的叫牌阶数略低，但基本传达了你的牌情。`;
+                                }
+                            }
+                        } else {
+                            feedback.isAcceptable = false;
+                            feedback.explanation = `你的应叫${bid}不太合适。对${lastSubstantialBid.player}的${lastSubstantialBid.bid}叫牌，推荐应叫${recommendedBid}。`;
+                            
+                            detailedExplanation += `你的应叫${bid}不符合自然叫牌法的应叫原则。`;
+                            
+                            if (recommendedBid === 'Pass') {
+                                detailedExplanation += ` 你的牌力不足（${hcp}点），不应该应叫。`;
+                            } else if (recommendedBid.includes('NT')) {
+                                detailedExplanation += ` 你应该应叫${recommendedBid}，表示你有平均牌型和足够点力。`;
+                            } else if (recommendedBid.charAt(1) === openerStrain) {
+                                detailedExplanation += ` 你应该加叫同伴的花色到${recommendedBid.charAt(0)}阶，因为你有${distribution[openerStrain.toLowerCase()]}张支持。`;
+                            } else {
+                                detailedExplanation += ` 你应该应叫自己的长套花色${suitNames[recommendedBid.substring(1).toLowerCase()]}，而不是${suitNames[strain.toLowerCase()]}。`;
+                            }
+                        }
+                    }
+                    
+                    feedback.detailedExplanation = detailedExplanation;
+                }
+            }
+            
+            return feedback;
+        }
+
+        // 模拟叫牌过程
+        function simulateAuction() {
+            // 模拟其他玩家的叫牌，直到轮到南家
+            if (gameState.currentPlayer !== 'S') {
+                // 获取当前玩家的牌
+                const currentHand = gameState.currentHand[gameState.currentPlayer];
+                
+                // 生成叫牌
+                let bid;
+                if (gameState.auction.length === 0) {
+                    // 第一声叫牌
+                    bid = generateOpeningBid(currentHand);
+                } else {
+                    // 后续叫牌，根据前面的叫牌历史生成合理的叫牌
+                    const lastBid = gameState.auction[gameState.auction.length - 1];
+                    bid = generateContinuingBid(currentHand, gameState.auction);
+                }
+                
+                // 执行叫牌
+                makeBid(bid, true);
+                
+                // 延迟继续叫牌流程
+                setTimeout(() => {
+                    simulateAuction();
+                }, 1000);
+            } else {
+                // 轮到玩家叫牌，显示叫牌区域
+                document.getElementById('biddingArea').classList.remove('hidden');
+            }
+        }
+        
+        // 生成后续叫牌
+        function generateContinuingBid(hand, auctionHistory) {
+            // 计算高花点
+            let hcp = 0;
+            hand.forEach(card => {
+                hcp += card.value;
+            });
+            
+            // 如果点力很弱，通常Pass
+            if (hcp < 6) {
+                return 'Pass';
+            }
+            
+            // 检查是否有合适的花色可以叫
+            const distribution = {
+                'spades': 0,
+                'hearts': 0,
+                'diamonds': 0,
+                'clubs': 0
+            };
+            
+            hand.forEach(card => {
+                distribution[card.suit]++;
+            });
+            
+            // 确定最长花色
+            const suitsByLength = Object.entries(distribution)
+                .sort((a, b) => b[1] - a[1])
+                .map(entry => entry[0]);
+            
+            // 检查最后一个实质性叫牌
+            let lastBid = null;
+            for (let i = auctionHistory.length - 1; i >= 0; i--) {
+                if (!auctionHistory[i].isPass && !auctionHistory[i].isDouble && !auctionHistory[i].isRedouble) {
+                    lastBid = auctionHistory[i];
+                    break;
+                }
+            }
+            
+            // 如果没有实质性叫牌，做开叫
+            if (!lastBid) {
+                return generateOpeningBid(hand);
+            }
+            
+            // 检查是否可以叫更高阶的花色
+            for (const suit of suitsByLength) {
+                if (distribution[suit] >= 4) {
+                    const suitSymbol = suit.charAt(0).toUpperCase();
+                    const suitRank = suits.indexOf(suit);
+                    const lastSuitRank = lastBid.strain === 'NT' ? 4 : suits.indexOf(lastBid.strain.toLowerCase());
+                    
+                    // 如果是更高阶或更高花色
+                    if (lastBid.level < 4 && (suitRank > lastSuitRank || lastBid.level < 3)) {
+                        const newLevel = suitRank > lastSuitRank ? lastBid.level : lastBid.level + 1;
+                        return `${newLevel}${suitSymbol}`;
+                    }
+                }
+            }
+            
+            // 如果是同伴开叫，可以考虑加叫
+            const partner = getPartner(gameState.currentPlayer);
+            const partnerBid = auctionHistory.find(bid => bid.player === partner && !bid.isPass && !bid.isDouble && !bid.isRedouble);
+            
+            if (partnerBid) {
+                const suit = partnerBid.strain.toLowerCase();
+                let supportLength = 0;
+                hand.forEach(card => {
+                    if (card.suit === suit) supportLength++;
+                });
+                
+                if (supportLength >= 3) {
+                    // 有支持，可以加叫
+                    if (hcp >= 10) {
+                        return `${partnerBid.level + 1}${partnerBid.strain}`;
+                    }
+                }
+            }
+            
+            // 默认Pass
+            return 'Pass';
+        }
+        
+        // 获取同伴
+        function getPartner(player) {
+            const partners = {
+                'N': 'S',
+                'S': 'N',
+                'E': 'W',
+                'W': 'E'
+            };
+            return partners[player];
+        }
+        
+        // 做出叫牌
+        function makeBid(bid, isSystemBid = false) {
+            // 如果叫牌已完成，不允许继续叫牌
+            if (gameState.isBiddingComplete) return;
+            
+            // 解析叫牌
+            let bidData = {
+                player: gameState.currentPlayer,
+                bid: bid,
+                isPass: bid === 'Pass',
+                isDouble: bid === 'Double',
+                isRedouble: bid === 'Redouble',
+                level: null,
+                strain: null
+            };
+            
+            // 解析阶数和花色
+            if (!bidData.isPass && !bidData.isDouble && !bidData.isRedouble) {
+                bidData.level = parseInt(bid.charAt(0));
+                bidData.strain = bid.substring(1);
+            }
+            
+            // 添加到叫牌历史
+            gameState.auction.push(bidData);
+            
+            // 更新UI
+            updateAuctionHistory();
+            
+            // 如果是系统叫牌，不进行评估
+            if (!isSystemBid) {
+                // 评估叫牌
+                const hand = gameState.currentHand['S'];
+                const feedback = evaluateBid(bid, hand, gameState.auction);
+                
+                // 显示点评
+                showFeedback(feedback);
+                
+                // 标记叫牌完成
+                gameState.isBiddingComplete = true;
+                
+                // 显示所有牌面
+                displayCards();
+            } else {
+                // 系统叫牌后，切换到下一个玩家
+                const players = ['N', 'E', 'S', 'W'];
+                const currentIndex = players.indexOf(gameState.currentPlayer);
+                gameState.currentPlayer = players[(currentIndex + 1) % 4];
+                
+                // 如果是应叫模式且刚完成一轮叫牌，检查是否需要结束叫牌
+                if (gameState.mode === 'responding') {
+                    // 检查是否有连续3个Pass
+                    let passCount = 0;
+                    for (let i = gameState.auction.length - 1; i >= 0; i--) {
+                        if (gameState.auction[i].isPass) {
+                            passCount++;
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    // 如果有连续3个Pass且至少有一个实质性叫牌，结束叫牌
+                    const hasSubstantialBid = gameState.auction.some(bid => 
+                        !bid.isPass && !bid.isDouble && !bid.isRedouble
+                    );
+                    
+                    if (passCount >= 3 && hasSubstantialBid) {
+                        gameState.isBiddingComplete = true;
+                        displayCards();
+                        return;
+                    }
+                }
+            }
+        }
+
+        // 显示点评
+        function showFeedback(feedback) {
+            const feedbackArea = document.getElementById('feedbackArea');
+            const feedbackContent = document.getElementById('feedbackContent');
+            
+            // 隐藏叫牌区域，显示点评区域
+            document.getElementById('biddingArea').classList.add('hidden');
+            feedbackArea.classList.remove('hidden');
+            
+            // 设置点评内容
+            let html = '';
+            
+            if (feedback.isCorrect) {
+                html += '<div class="bg-green-100 text-green-800 p-4 rounded-lg mb-4">';
+                html += '<i class="fa fa-check-circle text-green-500 mr-2"></i>';
+                html += '正确的叫牌！';
+                html += '</div>';
+            } else if (feedback.isAcceptable) {
+                html += '<div class="bg-yellow-100 text-yellow-800 p-4 rounded-lg mb-4">';
+                html += '<i class="fa fa-exclamation-circle text-yellow-500 mr-2"></i>';
+                html += '可接受的叫牌，但有改进空间。';
+                html += '</div>';
+            } else {
+                html += '<div class="bg-red-100 text-red-800 p-4 rounded-lg mb-4">';
+                html += '<i class="fa fa-times-circle text-red-500 mr-2"></i>';
+                html += '不太合适的叫牌。';
+                html += '</div>';
+            }
+            
+            html += '<div class="mb-4">';
+            html += '<h3 class="text-lg font-bold mb-2">点评：</h3>';
+            html += '<p>' + feedback.explanation + '</p>';
+            html += '</div>';
+            
+            html += '<div class="mb-4">';
+            html += '<h3 class="text-lg font-bold mb-2">推荐叫牌：</h3>';
+            html += '<p class="text-xl font-bold text-blue-600">' + feedback.recommendedBid + '</p>';
+            html += '</div>';
+            
+            // 添加详细解释部分
+            html += '<div class="mb-6">';
+            html += '<h3 class="text-lg font-bold mb-3 flex items-center">';
+            html += '<i class="fa fa-info-circle mr-2 text-blue-500"></i>';
+            html += '详细解释';
+            html += '</h3>';
+            html += '<div class="bg-blue-50 p-4 rounded-lg text-sm leading-relaxed">';
+            html += feedback.detailedExplanation;
+            html += '</div>';
+            html += '</div>';
+            
+            // 添加自然叫牌法小贴士
+            html += '<div class="mb-6">';
+            html += '<h3 class="text-lg font-bold mb-3 flex items-center">';
+            html += '<i class="fa fa-lightbulb-o mr-2 text-yellow-500"></i>';
+            html += '自然叫牌法小贴士';
+            html += '</h3>';
+            html += '<div class="bg-yellow-50 p-4 rounded-lg">';
+            html += '<div class="text-sm leading-relaxed">';
+            html += '<p class="font-bold mb-2">开叫基本原则：</p>';
+            html += '<ul class="list-disc pl-5 mb-4">';
+            html += '<li>12-21点：一阶花色开叫（优先选择最长花色）</li>';
+            html += '<li>15-17点，均型牌：1NT开叫</li>';
+            html += '<li>22点以上：2♣强开叫</li>';
+            html += '<li>6-11点：Pass</li>';
+            html += '</ul>';
+            
+            html += '<p class="font-bold mb-2">应叫基本原则：</p>';
+            html += '<ul class="list-disc pl-5">';
+            html += '<li>6点以下：Pass</li>';
+            html += '<li>6-10点：简单应叫（加叫同伴花色或叫出自己的长套）</li>';
+            html += '<li>11-12点：邀请进局</li>';
+            html += '<li>13点以上：逼叫进局</li>';
+            html += '</ul>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            
+            feedbackContent.innerHTML = html;
+        }
+
+        // 初始化游戏
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
